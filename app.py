@@ -27,13 +27,13 @@ def create():
         conn.close()
         
         flash('Note create successfully!', 'success')
-        return redirect(url_for('create'))
+        return redirect(url_for('index'))
     
     else:
         return render_template('create.html')
         
     
-    
+@app.route('/')
 def index():
     conn = get_connection()
     notes = conn.execute('SELECT * FROM notes').fetchall()
