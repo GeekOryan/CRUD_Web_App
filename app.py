@@ -67,10 +67,10 @@ def edit(note_id):
     
     return render_template('edit.html', note=note)
 
-@app.route('/delete/<int:note:id>')
+@app.route('/delete/<int:note_id>')
 def delete(note_id):
     conn = get_connection()
-    conn.execute('DELETE FROM notes WHERE id = ?', (note_id))
+    conn.execute('DELETE FROM notes WHERE id = ?', (note_id,))
     conn.commit()
     conn.close()
     flash('Note deleted successfully!', 'success')
