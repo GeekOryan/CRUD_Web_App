@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>My Notes</h1>
+
+{% if notes %}
+    {% for note in notes %}
+    <div class="note-card">
+        <h2>{{ note['title']}}</h2>
+        <p>{{ note['content']}}</p>
+        <div class="note-actions">
+            <a href="{{ url_for('edit', note_id=note['id'])}}">Edit</a>
+            <a href="{{ url_for('delete', note_id=note['id'])}}">Delete</a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p>No notes yet. <a href="{{ url_for('create')}}">Create your first note.</a></p>
+{% endif %}
+
+{% endblock %}
