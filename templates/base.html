@@ -8,7 +8,14 @@
 </head>
 <body>
 
+    <canvas id="particle-canvas"></canvas>
+    <div class="cursor-glow" id="cursorGlow"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
     <nav>
+        <span class="nav-brand">📝 Notes</span>
         <a href="{{ url_for('index')}}">All Notes</a>
         <a href="{{ url_for('create')}}">New Note</a>
     </nav>
@@ -26,6 +33,77 @@
         {% block content %}{% endblock %}
 
     </div>
+
+<script>
+    // The Cursor glow
+    const glow = document.getElementById('cursorGlow');
+    document.addEventListener('mousemove', e => {
+        glow.style.left = e.clientX + 'px';
+        glow.style.top = e.clientY + 'px';
+    });
+
+    // The Floating Particles
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerHeight;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    document.addEventListener('mousemove', e => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+
+    const particles = []
+    const PARTICLE_COUNT = 60;
+
+    class Particle {
+        constructor() { this.reset(); }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2.5 + 0.5;
+            this.speedX = (Math.random() - 0.5) * 0.4;
+            this.speedY = (Math.random() - 0.5) * 0.4;
+            this.opacity = Math.random() * 0.5 + 0.1;
+            this.color = Math.random() > 0.6 ? '#f5c518' : '#ffffff';
+        }
+        update(){
+            const dx = mouse.x - this.x;
+            const dy = mouse.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 120){
+                this.x -= (dx / dist) * 0.8;
+                this.y -= (dy / dist) * 0.8;
+            }
+            this.x += this.speedX;
+            this.y += this.speedY;
+            if (this.x < 0 || this.x > canvas.width || this.y > canvas.height) this.reset();
+        }
+        draw(){
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = this.opacity;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    for (let x = 0; x < PARTICLE_COUNT; x++) particles.push(new Particle());
+
+    function animateParticles(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+</script>
 
 </body>
 </html>
