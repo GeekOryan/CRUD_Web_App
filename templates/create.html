@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>Create New Note </h1>
-
+<div class="form-card">
 <form method = "POST">
     <div>
         <label for="title">Title:</label>
@@ -15,4 +15,5 @@
     <button type="submit">Save Note</button>
     <a href="{{ url_for('index')}}">Cancel</a>
 </form>
+</div>
 {% endblock %}
