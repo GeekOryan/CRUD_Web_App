@@ -16,3 +16,13 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
+    
+def migrate_db():
+    conn = get_connection()
+    conn.execute('''
+                ALTER TABLE notes
+                ADD is_pinned INT DEFAULT 0;
+                ADD created_at TEXT;
+                ADD updated_at TEXT;
+                ADD word_count INT DEFAULT 0;
+                ''')
