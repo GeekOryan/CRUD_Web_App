@@ -1,12 +1,13 @@
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, flash
-from database import get_connection, init_db
+from database import get_connection, init_db, migrate_db
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
 
 init_db()
+migrate_db()
 
 @app.route('/create', methods=['GET', 'POST'])
 def create():

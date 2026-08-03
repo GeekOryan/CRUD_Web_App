@@ -19,10 +19,19 @@ def init_db():
     
 def migrate_db():
     conn = get_connection()
-    conn.execute('''
-                ALTER TABLE notes
-                ADD is_pinned INT DEFAULT 0;
-                ADD created_at TEXT;
-                ADD updated_at TEXT;
-                ADD word_count INT DEFAULT 0;
-                ''')
+    
+    migrations = [
+        "ALTER TABLE notes ADD COLUMN is_pinned INTEGER DEFAULT 0",
+        "ALTER TABLE notes ADD COLUMN created_at TEXT",
+        "ALTER TABLE notes ADD COLUMN updated_at TEXT",
+        "ALTER TABLE notes ADD COLUMN word_count INTEGER DEFAULT 0"
+    ]
+    
+    for migration in migrations:
+        try:
+            conn.execute(migration)
+        except Exception:
+            pass
+        
+    conn.commit()
+    conn.close()
