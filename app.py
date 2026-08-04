@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from database import get_connection, init_db, migrate_db
 
@@ -14,6 +15,11 @@ def create():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        created_at = now
+        updated_at = now
+        word_count = len(content.split())
         
         if not title or not content:
             flash('Both title and content are required!', 'error')
@@ -21,9 +27,10 @@ def create():
         
         conn = sqlite3.connect('notes.db')
         conn.execute(
-            'INSERT INTO notes (title, content) VALUES (?, ?)',
-            (title, content)
+            'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
+            (title, content, created_at, updated_at, word_count)
         )
+        
         conn.commit()
         conn.close()
         
@@ -50,6 +57,11 @@ def edit(note_id):
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        updated_at = now
+        word_count = len(content.split())
+        
         
         if not title or not content:
             flash('Both title and content are required!', 'error')
@@ -57,8 +69,8 @@ def edit(note_id):
         
         conn = get_connection()
         conn.execute(
-            'UPDATE notes SET title = ?, content = ? WHERE id = ?',
-            (title, content, note_id)
+            'UPDATE notes SET title = ?, content = ?, updated_at = ?, word_count = ? WHERE id = ?',
+            (title, content, updated_at, word_count, note_id)
         )
         conn.commit()
         conn.close()
