@@ -3,6 +3,26 @@
 {% block content %}
 <h1>My Notes</h1>
 
+<form method="GET" action="{{ url_for('index') }}" class="mb-6">
+    <div class="flex gap-3">
+        <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="Search notes..."
+            class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-blue-400"
+        >
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+            Search
+        </button>
+        {% if query %}
+        <a href="{{ url_for('index') }}" class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 hover:border-gray-400 transition-colors">
+            Clear
+        </a>
+        {% endif %}
+    </div>
+</form>
+
 {% if notes %}
     {% for note in notes %}
     <div class="note-card bg-white rounded-xl p-6 mb-4 border border-gray-200">

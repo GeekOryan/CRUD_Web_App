@@ -44,9 +44,21 @@ def create():
 @app.route('/')
 def index():
     conn = get_connection()
-    notes = conn.execute('SELECT * FROM notes ORDER BY is_pinned DESC, created_at DESC').fetchall()
+    query = request.args.get('q' '')
+    search_term = f"%{query}%"
+    
+    if query:
+        notes = conn.execute(
+            'SELECT * FROM notes WHERE title LIKE ? OR content LIKE ? ORDER BY is_pinned DESC, created_at DESC',
+            (search_term, search_term)
+        ).fetchall()
+    else:
+        notes = conn.execute(
+            'SELECT * FROM notes ORDER BY is_pinned DESC, created_at DESC'
+        ).fetchall()
+        
     conn.close()
-    return render_template('index.html', notes = notes)
+    return render_template('index.html', notes=notes, query=query or '')
 
 @app.route('/edit/<int:note_id>', methods=['GET', 'POST'])
 def edit(note_id):
