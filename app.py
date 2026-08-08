@@ -44,7 +44,7 @@ def create():
 @app.route('/')
 def index():
     conn = get_connection()
-    notes = conn.execute('SELECT * FROM notes').fetchall()
+    notes = conn.execute('SELECT * FROM notes ORDER BY is_pinned DESC, created_at DESC').fetchall()
     conn.close()
     return render_template('index.html', notes = notes)
 
@@ -87,6 +87,15 @@ def delete(note_id):
     conn.commit()
     conn.close()
     flash('Note deleted successfully!', 'success')
+    return redirect(url_for('index'))
+
+@app.route('/pin/<int:note_id>')
+def pin(note_id):
+    conn = get_connection()
+    conn.execute('UPDATE notes SET is_pinned = 1 - is_pinned WHERE id = ?', (note_id,))
+    conn.commit()
+    conn.close()
+    flash('Note pinned successfully!', 'success')
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
