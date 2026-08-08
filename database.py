@@ -14,6 +14,21 @@ def init_db():
             content TEXT NOT NULL
         )
     ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS note_tags (
+            note_id INTEGER NOT NULL,
+            tag_id INTEGER NOT NULL,
+            FOREIGN KEY (note_id) REFERENCES notes(id),
+            FOREIGN KEY (tag_id) REFERENCES tags(id),
+            PRIMARY KEY (note_id, tag_id)
+        )
+    ''')
     conn.commit()
     conn.close()
     
@@ -24,7 +39,9 @@ def migrate_db():
         "ALTER TABLE notes ADD COLUMN is_pinned INTEGER DEFAULT 0",
         "ALTER TABLE notes ADD COLUMN created_at TEXT",
         "ALTER TABLE notes ADD COLUMN updated_at TEXT",
-        "ALTER TABLE notes ADD COLUMN word_count INTEGER DEFAULT 0"
+        "ALTER TABLE notes ADD COLUMN word_count INTEGER DEFAULT 0",
+        "CREATE TABLE IF NOT EXISTS tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)",
+        "CREATE TABLE IF NOT EXISTS note_tags (note_id INTEGER NOT NULL, tag_id INTEGER NOT NULL, FOREIGN KEY (note_id) REFERENCES notes(id), FOREIGN KEY (tag_id) REFERENCES tags(id), PRIMARY KEY (note_id, tag_id))"
     ]
     
     for migration in migrations:
