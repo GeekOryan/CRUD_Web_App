@@ -2,7 +2,7 @@ import os
 import sqlite3
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
-from database import get_connection, init_db, migrate_db
+from database import get_connection, init_db, migrate_db, get_all_tags
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
@@ -15,7 +15,10 @@ def create():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
+        raw_tags = request.form.get('tags', '')
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        tag_list = [t.strip().lower() for t in raw_tags.split(',') if t.strip()]
         
         created_at = now
         updated_at = now
@@ -25,11 +28,22 @@ def create():
             flash('Both title and content are required!', 'error')
             return render_template('create.html', title = title, content = content)
         
-        conn = sqlite3.connect('notes.db')
+        conn = get_connection()
+        
         conn.execute(
             'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
             (title, content, created_at, updated_at, word_count)
         )
+        
+        new_note_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+        
+        for tag_name in tag_list:
+            
+            conn.execute("INSERT OR IGNORE INTO tags (name) VALUES (?)", (tag_name,))
+            
+            tag = conn.execute('SELECT id FROM tags WHERE name = ?', (tag_name,)).fetchone()
+            
+            conn.execute('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)', (new_note_id, tag['id']))
         
         conn.commit()
         conn.close()
@@ -38,13 +52,14 @@ def create():
         return redirect(url_for('index'))
     
     else:
-        return render_template('create.html')
+        tags = get_all_tags()
+        return render_template('create.html', tags=tags)
         
     
 @app.route('/')
 def index():
     conn = get_connection()
-    query = request.args.get('q' '')
+    query = request.args.get('q', '')
     search_term = f"%{query}%"
     
     if query:
@@ -56,6 +71,15 @@ def index():
         notes = conn.execute(
             'SELECT * FROM notes ORDER BY is_pinned DESC, created_at DESC'
         ).fetchall()
+        
+    notes = [dict(note) for note in notes]
+    for note in notes:
+        tags = conn.execute('''
+            SELECT tags.name FROM tags
+            JOIN note_tags ON tags.id = note_tags.tag_id
+            WHERE note_tags.note_id = ?
+        ''', (note['id'],)).fetchall()
+        note['tags'] = [tag['name'] for tag in tags]
         
     conn.close()
     return render_template('index.html', notes=notes, query=query or '')
@@ -89,8 +113,8 @@ def edit(note_id):
         
         flash('Note has been updated successfully!', 'success')
         return redirect(url_for('index'))
-    
-    return render_template('edit.html', note=note)
+    tags = get_all_tags()
+    return render_template('edit.html', note=note, tags=tags)
 
 @app.route('/delete/<int:note_id>')
 def delete(note_id):

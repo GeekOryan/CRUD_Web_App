@@ -33,9 +33,19 @@
 
         <p class="text-xs text-gray-400 mt-2">
             Created: {{ note['created_at'] }} .
-            Updated: {{ note['updated-at'] }} .
+            Updated: {{ note['updated_at'] }} .
             {{ note['word_count'] }} words
         </p>
+
+        {% if note['tags'] %}
+        <div class="flex flex-wrap gap-2 mt-2">
+            {% for tag in note['tags'] %}
+            <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+                {{ tag }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         <div class="note-actions">
             <a href="{{ url_for('edit', note_id=note['id'])}}" class="btn-edit">Edit</a>
