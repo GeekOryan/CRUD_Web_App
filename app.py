@@ -88,7 +88,7 @@ def index():
 def edit(note_id):
     conn = get_connection()
     note = conn.execute('SELECT * FROM notes WHERE id = ?', (note_id,)).fetchone()
-    conn.close()
+    
     
     if request.method == 'POST':
         title = request.form['title']
@@ -103,18 +103,39 @@ def edit(note_id):
             flash('Both title and content are required!', 'error')
             return render_template('edit.html', note=note)
         
+        conn.close()
+        
         conn = get_connection()
         conn.execute(
             'UPDATE notes SET title = ?, content = ?, updated_at = ?, word_count = ? WHERE id = ?',
             (title, content, updated_at, word_count, note_id)
         )
+        
+        raw_tags = request.form.get('tags', '')
+        tag_list = [t.strip().lower() for t in raw_tags.split(',') if t.strip()]
+        
+        conn.execute('DELETE FROM note_tags WHERE note_id = ?', (note_id,))
+        
+        for tag_name in tag_list:
+            conn.execute('INSERT OR IGNORE INTO tags (name) VALUES (?)', (tag_name,))
+            tag = conn.execute('SELECT id FROM tags WHERE name = ?', (tag_name,)).fetchone()
+            conn.execute('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)', (note_id, tag['id']))
+            
         conn.commit()
         conn.close()
         
         flash('Note has been updated successfully!', 'success')
         return redirect(url_for('index'))
-    tags = get_all_tags()
-    return render_template('edit.html', note=note, tags=tags)
+    
+    existing_tags = conn.execute('''
+        SELECT tags.name FROM tags
+        JOIN note_tags ON tags.id = note_tags.tag_id
+        WHERE note_tags.note_id = ?
+    ''', (note_id,)).fetchall()
+    
+    tag_string = ', '.join([t['name'] for t in existing_tags])
+    conn.close()
+    return render_template('edit.html', note=note, tag_string=tag_string)
 
 @app.route('/delete/<int:note_id>')
 def delete(note_id):
