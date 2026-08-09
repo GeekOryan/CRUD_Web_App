@@ -1,25 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notes Manager</title>
+    
+    <!-- Apply theme immediately to prevent flash -->
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.className = savedTheme;
+    </script>
+    
+    <script>
+        tailwind = { config: { darkMode: 'class' } }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css')}}">
 </head>
-<body class="bg-gray-50 min-h-screen">
 
     <canvas id="particle-canvas"></canvas>
 
+    <div class="hidden dark:bg-gray-900 dark:bg-gray-800 dark:bg-gray-700 dark:text-white dark:text-gray-300 dark:text-gray-400 dark:text-gray-500 dark:border-gray-700 dark:border-gray-600"></div>
+
     <!-- NAVBAR -->
-    <nav class="bg-white border-b border-gray-200 px-8 py-4 flex items-center gap-8 sticky top-0 z-10 shadow-sm">
-        <span class="text-x1 font-black text-blue-600 mr-auto tracking-tight">📝 Notes</span>
+    <nav class="px-8 py-4 flex items-center gap-8 sticky top-0 z-10 shadow-sm">
+        <span class="text-xl font-black text-blue-600 mr-auto tracking-tight">📝 Notes</span>
         <a href="{{ url_for('index') }}" class="text-gray-500 hover:text-blue-600 font-mdeium text-sm transition-colors">All Notes</a>
         <a href="{{ url_for('create') }}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">+ New Note</a>
+        <button onclick="toggleTheme()" id="theme-btn" class="text-gray-500 hover:text-blue-600 text-xl transition-colors">🌙</button>
     </nav>
 
     <!-- MAIN CONTENT -->
-    <div class="max-w-3x1 mx-auto px-6 py-10 relative z-5">
+    <div class="max-w-3xl mx-auto px-6 py-10 relative z-5">
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -113,6 +125,29 @@
         requestAnimationFrame(animate);
     }
     animate();
+
+    function toggleTheme(){
+        const html = document.documentElement;
+        const btn = document.getElementById('theme-btn');
+
+        if (html.classList.contains('dark')){
+            html.classList.remove('dark');
+            html.classList.add('light');
+            btn.textContent = "🌙";
+            localStorage.setItem('theme', 'light');
+        } else {
+            html.classList.remove('light');
+            html.classList.add('dark');
+            btn.textContent = '☀️';
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('theme') === 'dark') {
+        document.getElementById('theme-btn').textContent = '☀️';
+    }
+});
     </script>
 
 </body>

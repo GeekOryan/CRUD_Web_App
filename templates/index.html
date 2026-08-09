@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>My Notes</h1>
+<h1 class="text-2x1 font-bold mb-6 text-gray-900 dark:text-white">My Notes</h1>
 
 <form method="GET" action="{{ url_for('index') }}" class="mb-6">
     <div class="flex gap-3">
@@ -10,7 +10,7 @@
             name="q"
             value="{{ query }}"
             placeholder="Search notes..."
-            class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-blue-400"
+            class="search-input"
         >
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
             Search
@@ -25,13 +25,13 @@
 
 {% if notes %}
     {% for note in notes %}
-    <div class="note-card bg-white rounded-xl p-6 mb-4 border border-gray-200">
+    <div class="note-card">
         
-        <h2 class="text-gray-900 font-bold text-lg mb-2">{{ note['title'] }}</h2>
+        <h2 class="text-gray-900 dark:text-white font-bold text-lg mb-2">{{ note['title'] }}</h2>
 
-        <p class="text-gray-600 text-sm leading-relaxed mb-4">{{ note['content'] }}</p>
+        <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{{ note['content'] }}</p>
 
-        <p class="text-xs text-gray-400 mt-2">
+        <p class="note-meta">
             Created: {{ note['created_at'] }} .
             Updated: {{ note['updated_at'] }} .
             {{ note['word_count'] }} words
