@@ -3,6 +3,14 @@ import sqlite3
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from database import get_connection, init_db, migrate_db, get_all_tags
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
+from reportlab.lib import colors
+from flask import make_response
+import io
+
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-123')
@@ -154,6 +162,99 @@ def pin(note_id):
     conn.close()
     flash('Note pinned successfully!', 'success')
     return redirect(url_for('index'))
+
+@app.route('/export/all')
+def export_all_notes():
+    conn = get_connection()
+    notes = conn.execute('SELECT * FROM notes ORDER BY is_pinned DESC, created_at DESC').fetchall()
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=inch, leftMargin=inch,
+                            topMargin=inch, bottomMargin=inch)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('title', fontSize=18, fontName='Times-Bold', spaceAfter=6)
+    meta_style = ParagraphStyle('meta', fontSize=9, fontName='Times-Roman', textColor=colors.grey, spaceAfter=4)
+    body_style = ParagraphStyle('body', fontSize=12, fontName='Times-Roman', leading=16, spaceAfter=16, wordWrap='LTR')
+    header_style = ParagraphStyle('header', fontSize=26, fontName='Times-Bold', spaceAfter=16, textColor=colors.HexColor('#3b82f6'))
+    
+    story = [
+        Paragraph('My Notes', header_style),
+        HRFlowable(width="100%", thickness=2, color=colors.HexColor('#3b82f6')),
+        Spacer(1, 20),
+    ]
+    
+    for note in notes:
+        tags = conn.execute('''
+            SELECT tags.name FROM tags
+            JOIN note_tags ON tags.id = note_tags.tag_id
+            WHERE note_tags.note_id = ?
+        ''', (note['id'],)).fetchall()
+        
+        tag_names = ', '.join([t['name'] for t in tags]) if tags else 'No tags'
+        
+        story.extend([
+            Paragraph(note['title'], title_style),
+            Spacer(1, 4),
+            Paragraph(f"Created: {note['created_at']} · {note['word_count']} words · Tags: {tag_names}", meta_style),
+            Spacer(1, 8),
+            Paragraph(note['content'].replace('\n', '<br/>'), body_style),
+            Spacer(1, 8),
+            HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#e5e7eb')),
+            Spacer(1, 12),
+        ])
+        
+    conn.close()
+    doc.build(story)
+    buffer.seek(0)
+        
+    response = make_response(buffer.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename="all_notes.pdf"'
+    return response
+
+@app.route('/export/<int:note_id>')
+def export_note(note_id):
+    conn = get_connection()
+    note = conn.execute('SELECT * FROM notes WHERE id = ?', (note_id,)).fetchone()
+    tags = conn.execute('''
+        SELECT tags.name FROM tags
+        JOIN note_tags ON tags.id = note_tags.tag_id
+        WHERE note_tags.note_id = ?
+    ''', (note_id,)).fetchall()
+    conn.close()
+    
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=inch, leftMargin=inch,
+                            topMargin=inch, bottomMargin=inch)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('title', fontSize=24, fontName='Times-Bold', spaceAfter=12)
+    meta_style = ParagraphStyle('meta', fontSize=10, fontName='Times-Roman', textColor=colors.grey, spaceAfter=6)
+    body_style = ParagraphStyle('body', fontSize=12, fontName='Times-Roman', leading=20, spaceAfter=12)
+    tag_style = ParagraphStyle('tag', fontSize=10, fontName='Times-Roman', textColor=colors.HexColor('#3b82f6'))
+    
+    tag_names = ', '.join([t['name'] for t in tags]) if tags else 'No tags'
+    
+    story = [
+        Paragraph(note['title'], title_style),
+        HRFlowable(width="100%", thickness=1, color=colors.HexColor('#e5e7eb')),
+        Spacer(1, 12),
+        Paragraph(f"Created: {note['created_at']} · Updated: {note['updated_at']} · {note['word_count']} words", meta_style),
+        Paragraph(f"Tags: {tag_names}", tag_style),
+        Spacer(1, 20),
+        Paragraph(note['content'].replace('\n', '<br/>'), body_style),
+    ]
+    
+    doc.build(story)
+    buffer.seek(0)
+    
+    response = make_response(buffer.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename="{note["title"]}.pdf"'
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)
