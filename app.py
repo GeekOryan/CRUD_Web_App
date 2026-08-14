@@ -63,6 +63,128 @@ def create():
         tags = get_all_tags()
         return render_template('create.html', tags=tags)
         
+@app.route('/import', methods=['GET', 'POST'])
+def import_notes():
+    if request.method == 'POST':
+        file = request.files.get('file')
+        
+        if not file or file.filename == '':
+            flash('No file selected.', 'error')
+            return redirect(url_for('import_notes'))
+        
+        filename = file.filename.lower()
+        content = file.read().decode('utf-8')
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        imported = 0
+        
+        conn = get_connection()
+        
+        if filename.endswith('.txt'):
+            title = file.filename.replace('.txt', '')
+            word_count = len(content.split())
+            conn.execute(
+                'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
+                (title, content, now, now, word_count)
+            )
+            imported = 1
+            
+        elif filename.endswith('.md'):
+            lines = content.split('\n')
+            title = "Imported Note"
+            for line in lines:
+                if line.startswith('# '):
+                    title = line.replace('# ', '').strip()
+                    break
+            word_count = len(content.split())
+            conn.execute(
+                'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
+                (title, content, now, now, word_count)
+            )    
+            imported = 1
+            
+        elif filename.endswith('.json'):
+            import json as json_lib
+            data = json_lib.loads(content)
+            
+            if isinstance(data, list):
+                notes_data = data
+            else:
+                notes_data = [data]
+                
+            for item in notes_data:
+                note_title = (item.get('title') or 
+                              item.get('name') or
+                              item.get('Name') or
+                              'Imported Note')
+                
+                note_content = (item.get('textContent') or
+                                item.get('content') or
+                                item.get('Content') or
+                                item.get('description') or '')
+                
+                if not note_content and 'listContent' in item:
+                    note_content = '\n'.join([li.get('text', '') for li in item['listContent']])
+                    
+                if not note_content:
+                    note_content = '\n'.join([f"{k}: {v}" for k, v in item.items()])
+                    
+                word_count = len(note_content.split())
+                conn.execute(
+                    'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
+                    (note_title, note_content, now, now, word_count)
+                )
+                imported += 1
+                
+        elif filename.endswith('.csv'):
+            import csv, io as csv_io
+            reader = csv.DictReader(csv_io.StringIO(content))
+            for row in reader:
+                note_title = row.get('Name', row.get('Title', 'Imported Notion Note'))
+                note_content = row.get('Content', row.get('Description', ''))
+                word_count = len(note_content.split())
+                conn.execute(
+                    'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
+                    (note_title, note_content, now, now, word_count)
+                )
+                imported += 1
+                
+        elif filename.endswith('.enex'):
+            from xml.etree import ElementTree as ET
+            root = ET.fromstring(content)
+            for note_elem in root.findall('note'):
+                note_title = note_elem.findtext('title') or 'Imported Note'
+                note_content_raw = note_elem.findtext('content') or ''
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(note_content_raw, 'html.parser')
+                note_content = soup.get_text(separator='\n').strip()
+                word_count = len(note_content.split())
+                conn.execute(
+                    'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
+                )
+                imported += 1
+            
+        elif filename.endswith('.html'):
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(content, 'html.parser')
+            note_title = soup.title.string if soup.title else file.filename.replace('.html', '')
+            note_content = soup.get_text(separator='\n').strip()
+            word_count = len(note_content.split())
+            conn.execute(
+                'INSERT INTO notes (title, content, created_at, updated_at, word_count) VALUES (?, ?, ?, ?, ?)',
+                (note_title, note_content, now, now, word_count)
+            )
+            imported += 1
+            
+        else:
+            flash('Unsupported file format.', 'error')
+            return redirect(url_for('import_notes'))
+            
+        conn.commit()
+        conn.close()
+        
+        flash(f'Successfully imported {imported} notes(s).', 'success')
+        return redirect(url_for('index'))
+    return render_template('import.html')
     
 @app.route('/')
 def index():
