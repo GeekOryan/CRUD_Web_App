@@ -44,38 +44,17 @@ nav {
    NOTE CARDS
    ============================================ */
 .note-card {
-  background-color: var(--surface);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.4s, border-color 0.3s, box-shadow 0.3s;
+  animation: pulseGlow 3s ease-in-out infinite;
 }
 
-.note-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-}
-
-.note-card h2 {
-  color: var(--text);
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.note-card p {
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 12px;
-}
-
-.note-meta {
-  color: var(--text-subtle);
-  font-size: 12px;
-  margin-bottom: 12px;
-}
 
 /* ============================================
    FORMS
