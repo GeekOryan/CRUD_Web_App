@@ -1,0 +1,18 @@
+[
+  {
+    "sku": "PROD-001",
+    "name": "Wireless Ergonomic Mouse",
+    "price": 49.99,
+    "inStock": true,
+    "tags": ["electronics", "office", "accessories"],
+    "dimensions": { "width": 7.5, "height": 4.2, "depth": 11.8 }
+  },
+  {
+    "sku": "PROD-002",
+    "name": "Mechanical Keyboard (RGB)",
+    "price": 89.95,
+    "inStock": false,
+    "tags": ["electronics", "gaming"],
+    "dimensions": { "width": 44.2, "height": 3.8, "depth": 13.5 }
+  }
+]

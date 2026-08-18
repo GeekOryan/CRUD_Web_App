@@ -52,3 +52,9 @@ def migrate_db():
         
     conn.commit()
     conn.close()
+    
+def get_all_tags():
+    conn = get_connection()
+    tags = conn.execute('SELECT * FROM tags ORDER BY name').fetchall()
+    conn.close()
+    return tags
