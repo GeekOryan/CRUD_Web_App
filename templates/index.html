@@ -1,78 +1,122 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="text-2x1 font-bold mb-6 text-gray-900 dark:text-white">My Notes</h1>
-
-<form method="GET" action="{{ url_for('index') }}" class="mb-6">
-    <div class="flex gap-3">
-        <input
-            type="text"
-            name="q"
-            value="{{ query }}"
-            placeholder="Search notes..."
-            class="search-input"
-        >
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
-            Search
-        </button>
-        <a href="{{ url_for('export_all_notes') }}" class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-            Export All PDF
-        </a>
-        {% if query %}
-        <a href="{{ url_for('index') }}" class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 hover:border-gray-400 transition-colors">
-            Clear
-        </a>
-        {% endif %}
-    </div>
-</form>
-
-{% if notes %}
-    {% for note in notes %}
-    <div class="note-card">
-
-        <div class="shimmer-sweep"></div>
-        
-        <h2 class="text-gray-900 dark:text-white font-bold text-lg mb-2">{{ note['title'] }}</h2>
-
-        <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{{ note['content'] }}</p>
-
-        <p class="note-meta">
-            Created: {{ note['created_at'] }} .
-            Updated: {{ note['updated_at'] }} .
-            {{ note['word_count'] }} words
-        </p>
-
-        {% if note['tags'] %}
-        <div class="flex flex-wrap gap-2 mt-2">
-            {% for tag in note['tags'] %}
-            <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                {{ tag }}
-            </span>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="note-actions">
-            <a href="{{ url_for('edit', note_id=note['id'])}}" class="btn-edit">Edit</a>
-            <a href="{{ url_for('delete', note_id=note['id'])}}" class="btn-delete">Delete</a>
-            <a href="{{ url_for('pin', note_id=note['id'])}}" class="text-xs font-semibold px-3 py-1 rounded-lg border
-                {% if note['is_pinned'] %}
-                    border-yellow-400 text-yellow-500 bg-yellow-50
-                {% else %}
-                    border-gray-300 text-gray-400
-                {% endif %}">
-                {% if note['is_pinned'] %}📌 Pinned{% else %}Pin{% endif %}
-            </a>
-            <a href="{{ url_for('export_note', note_id=note['id']) }}" class="text-xs font-semibold px-3 py-1 rounded-lg border border-green-400 text-green-600 hover:bg-green-600 hover:text-white transition-colors">
-                PDF
-            </a>
-        </div>
-    </div>
-    {% endfor %}
-{% else %}
-<div class="empty-state">
-    <p>No notes yet. <a href="{{ url_for('create')}}">Create your first note →.</a></p>
+<div class="page-header">
+  <h1 class="page-title">My Notes</h1>
+  <div class="page-actions">
+    <form method="GET" action="{{ url_for('index') }}" style="display:contents">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" name="q" value="{{ query or '' }}" placeholder="Search notes..." class="search-input">
+      </div>
+      {% if query %}
+      <a href="{{ url_for('index') }}" class="btn-clear">Clear</a>
+      {% endif %}
+    </form>
+    <a href="{{ url_for('export_all_notes') }}" class="btn-export-all">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export All
+    </a>
+  </div>
 </div>
-{% endif %}
 
+<div class="notes-grid">
+{% if notes %}
+  {% for note in notes %}
+  <div class="note-card" id="card-{{ note['id'] }}">
+    <div class="shimmer-sweep"></div>
+
+    <!-- COLLAPSED HEADER — click to open note -->
+    <div class="card-header" onclick="window.location='{{ url_for('view_note', note_id=note['id']) }}'">
+      <div class="card-header-content">
+        <div class="card-title">
+          {% if note['is_pinned'] %}
+          <span style="color:var(--warning);margin-right:4px;">📌</span>
+          {% endif %}
+          {{ note['title'] }}
+        </div>
+        <div class="card-meta-row">
+          <span class="card-date">{{ note['created_at'] | format_date }}</span>
+          <span class="card-dot"></span>
+          <span class="card-wordcount">{{ note['word_count'] }} words</span>
+          {% if note['tags'] %}
+          <span class="card-dot"></span>
+          <div class="card-tags">
+            {% for tag in note['tags'][:2] %}
+            <span class="tag-pill">{{ tag }}</span>
+            {% endfor %}
+            {% if note['tags']|length > 2 %}
+            <span class="tag-overflow">+{{ note['tags']|length - 2 }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- CHEVRON — click to expand actions only -->
+      <button class="card-chevron" id="chev-{{ note['id'] }}"
+        onclick="event.stopPropagation(); toggleActions({{ note['id'] }})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- EXPANDED ACTIONS -->
+    <div class="card-actions" id="actions-{{ note['id'] }}">
+      <a href="{{ url_for('edit', note_id=note['id']) }}" class="action-btn edit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Edit
+      </a>
+      <a href="{{ url_for('delete', note_id=note['id']) }}" class="action-btn delete"
+        onclick="return confirm('Delete this note?')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/>
+        </svg>
+        Delete
+      </a>
+      <a href="{{ url_for('pin', note_id=note['id']) }}" class="action-btn pin">
+        {% if note['is_pinned'] %}Unpin{% else %}Pin{% endif %}
+      </a>
+      <a href="{{ url_for('export_note', note_id=note['id']) }}" class="action-btn pdf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        PDF
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+    </svg>
+    <h3>No notes yet</h3>
+    <p>Start writing something worth remembering.</p>
+    <a href="{{ url_for('create') }}">Create your first note →</a>
+  </div>
+{% endif %}
+</div>
+
+<script>
+function toggleActions(id) {
+  const actions = document.getElementById('actions-' + id);
+  const chev = document.getElementById('chev-' + id);
+  actions.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+</script>
 {% endblock %}

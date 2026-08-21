@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-wrap">
+  <div class="form-card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;">
+      <div>
+        <h2 class="form-title" style="margin-bottom:6px;">{{ note['title'] }}</h2>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;color:var(--text-subtle);">{{ note['created_at'] | format_date }}</span>
+          <span style="width:3px;height:3px;border-radius:50%;background:var(--text-subtle);"></span>
+          <span style="font-size:12px;color:var(--text-subtle);">{{ note['word_count'] }} words</span>
+          {% if tags %}
+          <span style="width:3px;height:3px;border-radius:50%;background:var(--text-subtle);"></span>
+          {% for tag in tags %}
+          <span class="tag-pill">{{ tag }}</span>
+          {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      <a href="{{ url_for('index') }}" class="btn-secondary" style="padding:8px 14px;font-size:13px;flex-shrink:0;">← Back</a>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:20px;font-size:14px;color:var(--text);line-height:1.8;white-space:pre-wrap;">{{ note['content'] }}</div>
+
+    <div style="display:flex;gap:8px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);flex-wrap:wrap;">
+      <a href="{{ url_for('edit', note_id=note['id']) }}" class="action-btn edit">Edit</a>
+      <a href="{{ url_for('export_note', note_id=note['id']) }}" class="action-btn pdf">Export PDF</a>
+      <a href="{{ url_for('delete', note_id=note['id']) }}" class="action-btn delete" onclick="return confirm('Delete this note?')">Delete</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

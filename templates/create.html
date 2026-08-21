@@ -1,32 +1,68 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Create New Note</h1>
-<div class="form-card">
-  <form method="POST">
-    <div class="form-group">
-      <label for="title">Title</label>
-      <input type="text" id="title" name="title" value="{{ title or '' }}">
-    </div>
-    <div class="form-group">
-      <label for="content">Content</label>
-      <textarea id="content" name="content">{{ content or '' }}</textarea>
-    </div>
-    
-    <div class="form-group">
-      <label for="tags">Tags (comma separated)</label>
-      <input 
-        type="text" 
-        id="tags" 
-        name="tags" 
-        placeholder="e.g. work, python, urgent"
-        class="w-full px-4 py-2 border border-gray-200 rounded-lg text-gray-700 text-sm focus:outline-none focus:border-blue-400"
-      >
-    </div>
-    <div class="form-actions">
-      <button type="submit">Save Note</button>
-      <a href="{{ url_for('index') }}">Cancel</a>
-    </div>
-  </form>
+<div class="form-wrap">
+  <div class="form-card">
+    <h2 class="form-title">New Note</h2>
+
+    <form method="POST">
+      <div class="form-group">
+        <div class="form-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="21" y1="6" x2="3" y2="6"/><line x1="15" y1="12" x2="3" y2="12"/><line x1="17" y1="18" x2="3" y2="18"/>
+          </svg>
+          Title
+        </div>
+        <input type="text" name="title" class="form-input" placeholder="Give your note a title..." value="{{ title or '' }}" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Content
+        </div>
+        <textarea name="content" id="note-content" class="form-input"
+          placeholder="Start writing..." oninput="updateCount()">{{ content or '' }}</textarea>
+        <div class="char-count"><span id="word-count">0</span> words</div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+            <line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+          Tags
+        </div>
+        <input type="text" name="tags" class="form-input" placeholder="work, python, ideas...">
+        <div class="form-hint">Separate tags with commas</div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Save Note
+        </button>
+        <a href="{{ url_for('index') }}" class="btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
 </div>
+
+<script>
+function updateCount() {
+  const content = document.getElementById('note-content').value;
+  const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+  document.getElementById('word-count').textContent = words;
+}
+updateCount();
+</script>
 {% endblock %}

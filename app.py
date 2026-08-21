@@ -378,5 +378,32 @@ def export_note(note_id):
     response.headers['Content-Disposition'] = f'attachment; filename="{note["title"]}.pdf"'
     return response
 
+@app.route('/note/<int:note_id>')
+def view_note(note_id):
+    conn = get_connection()
+    note = conn.execute('SELECT * FROM notes WHERE id = ?', (note_id,)).fetchone()
+    tags = conn.execute('''
+        SELECT tags.name FROM tags
+        JOIN note_tags ON tags.id = note_tags.tag_id
+        WHERE note_tags.note_id = ?
+    ''', (note_id,)).fetchall()
+    conn.close()
+    tag_names = [t['name'] for t in tags]
+    return render_template('view_note.html', note=note, tags=tag_names)
+
+@app.template_filter('format_date')
+def format_value(value):
+    if not value:
+        return ''
+    
+    try:
+        from datetime import datetime
+        dt = datetime.strptime(value, '%Y-%m-%d %H:%M:$S')
+        return dt.strftime('%-d %b').lstrip('0')
+    except:
+        return value
+    
+    
+    
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

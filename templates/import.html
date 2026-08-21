@@ -1,30 +1,76 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-6">Import Notes</h1>
-
-<div class="form-card">
-    <p class="text-sm mb-6" style="color: var(--text-muted)">
-        Supported formats: Markdown (.md), Plain Text (.txt),
-        Google Keep (.json), Notion (.csv), Samsung Notes (.enex),
-        Apple Notes (.txt), OneNote (.html)
-    </p>
+<div class="form-wrap">
+  <div class="form-card">
+    <h2 class="form-title">Import Notes</h2>
 
     <form method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-            <label for="file">Choose a file to import</label>
-            <input
-                type="file"
-                id="file"
-                name="file"
-                accept=".md,.txt,.json,.csv,.enex,.html"
-                style="color: var(--text); background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; width: 100%;"
-            >
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" name="file" accept=".md,.txt,.json,.csv,.enex,.html"
+          onchange="handleFile(this)">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
         </div>
-        <div class="form-actions">
-            <button tyoe="submit">Import</button>
-            <a href="{{ url_for('index') }}">Cancel</a>
+        <div class="drop-title">Drop your file here</div>
+        <div class="drop-sub">or tap to browse from your device</div>
+        <div class="drop-formats">
+          <span class="format-pill">.md</span>
+          <span class="format-pill">.txt</span>
+          <span class="format-pill">.json</span>
+          <span class="format-pill">.csv</span>
+          <span class="format-pill">.enex</span>
+          <span class="format-pill">.html</span>
         </div>
+        <div class="drop-filename" id="drop-filename"></div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Import
+        </button>
+        <a href="{{ url_for('index') }}" class="btn-secondary">Cancel</a>
+      </div>
     </form>
+  </div>
 </div>
+
+<script>
+const dz = document.getElementById('drop-zone');
+
+dz.addEventListener('dragover', e => {
+  e.preventDefault();
+  dz.classList.add('dragover');
+});
+
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) showFilename(file.name);
+});
+
+function handleFile(input) {
+  if (input.files[0]) showFilename(input.files[0].name);
+}
+
+function showFilename(name) {
+  const fn = document.getElementById('drop-filename');
+  fn.textContent = '✓ ' + name;
+  fn.style.display = 'block';
+  dz.style.borderColor = 'var(--success)';
+  dz.style.background = 'rgba(34,197,94,0.05)';
+}
+</script>
 {% endblock %}
