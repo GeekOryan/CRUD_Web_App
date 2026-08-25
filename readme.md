@@ -67,6 +67,6 @@ python app.py
 Open `http://127.0.0.1:5000` in your browser.
 
 ## Screenshots
-![Notes App](screenshot1.png)
-![Dark Mode](screenshot2.png)
-![New Note](screenshot3.png)
+![Notes App](images/screenshot1.png)
+![New Note in Dark Mode](images/screenshot2.png)
+![Import Note](images/screenshot3.png)
